@@ -34,6 +34,16 @@ class WF(object):
 
         print '--------------------------------------------------------------\n'
 
+#        x = np.linspace(-6.5, 6.5, 300)
+#        y = np.linspace(4.0, 8.9, 300)
+#        xi, yi = np.meshgrid(x, y)
+#        x, y = xi.flatten(), yi.flatten()
+#        z = x*0.0
+#        XX = np.vstack((x, y, z))
+#        AA = self.get_value(XX.T)
+#        plt.contour(xi, yi, -AA.reshape(xi.shape), colors='red')
+#        plt.hold(True)
+#        plt.show()
 
 #    def __iter__(self):
 #        return self
@@ -91,8 +101,8 @@ if __name__ == "__main__":
     plt.show()
 
     def square_mod(x, par):
-        wf1 = wf.get_value([x[0], x[1], x[2]])
-        wf2 = wf.get_value([x[0], x[1], x[2]])
+        wf1 = par.get_value([x[0], x[1], x[2]])
+        wf2 = par.get_value([x[0], x[1], x[2]])
         return wf1*wf2
 
     xl = [-6.5, 0.0, -6.5]
