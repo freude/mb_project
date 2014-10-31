@@ -15,7 +15,7 @@ class WF(object):
 
         # the path to files containing wave functions (to fit with)
         self._path = kw.get('p', '/data/users/mklymenko/science/H2_100/programing/dis/v2/')
-        self._sn = kw.get('sn', 0)  # id of the system
+        self._sn = kw.get('sn', 10)  # id of the system
         self._qn = kw.get('qn', 0)  # id of the wave function
 
         print '\n--------------------------------------------------------------'
@@ -75,6 +75,22 @@ class WF(object):
             raise ValueError('The interpolant is not defined')
         return self.invdisttree(x, nnear=23, eps=0, p=1)
 
+    def get_matrix(self, x, y, z):
+        xi, yi, zi = np.meshgrid(x, y, z)
+        x, y, z = xi.flatten(), yi.flatten(), zi.flatten()
+        XX = np.vstack((x, y, z))
+        AA = self.get_value(XX.T)
+        return AA.reshape(xi.shape)
+
+    def plot2d(self, x, y):
+        xi, yi = np.meshgrid(x, y)
+        x, y = xi.flatten(), yi.flatten()
+        z = x*0.0
+        XX = np.vstack((x, y, z))
+        AA = self.get_value(XX.T)
+        plt.contour(xi, yi, -AA.reshape(xi.shape), colors='red')
+        plt.hold(True)
+        plt.show()
 
 # --------------------------------------------------------------------------
 # --------------------------------------------------------------------------
