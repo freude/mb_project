@@ -17,16 +17,18 @@ class CoulombInt(object):
     """Computes Coulomb integrals."""
 
     def __init__(self, N=2, **kw):
-
         self.N = N                              # number of basis functions
         self.comb = self.specialCombinations()  # four factor products
 
+        # pathes where to save or load from the integrals
         self._load = kw.get('pload', '/data/users/mklymenko/work_py/mb_project/')
         self._save = kw.get('psave', '/data/users/mklymenko/work_py/mb_project/')
 
         self.cint = []
+        # delete saved before integrals
         if os.path.isfile('/data/users/mklymenko/work_py/mb_project/coint2.dat'):
             os.remove('/data/users/mklymenko/work_py/mb_project/coint2.dat')
+
         try:               # try to read integrals from the disk
             with open(self._load + "coint2.dat"):
                 self.cint = np.loadtxt(self._load + "coint2.dat")
@@ -37,49 +39,33 @@ class CoulombInt(object):
             wfs_z = []       # array of wave functions represented as a set of fitting parameters
 
             for j in xrange(self.N):
-                wfs_x.append(GFit(qn=j, p='/data/users/mklymenko/science/H2_100/programing/dis/v0/', **kw)) # executing the fitting procedure N-times
-                wfs_y.append(GFit(qn=j, p='/data/users/mklymenko/science/H2_100/programing/dis/v1/', **kw)) # executing the fitting procedure N-times
-                wfs_z.append(GFit(qn=j, p='/data/users/mklymenko/science/H2_100/programing/dis/v2/', **kw)) # executing the fitting procedure N-times
+#                wfs_x.append(GFit(qn=j, p='/data/users/mklymenko/science/H2_100/programing/dis/v0/', **kw)) # executing the fitting procedure N-times
+                wfs_y.append(GFit(qn=j, p='/data/users/mklymenko/science/H2_100/programing/dis/v2/', flag='int', **kw)) # executing the fitting procedure N-times
+#                wfs_z.append(GFit(qn=j, p='/data/users/mklymenko/science/H2_100/programing/dis/v2/', **kw)) # executing the fitting procedure N-times
 
-            print(wfs_x[1].gf)
+
             # computing integrals for all possible combinations stored in self.comb
-            self.cint = [self.comp_int(wfs_x[j[0]],wfs_x[j[1]],wfs_x[j[2]],wfs_x[j[3]]) for j in self.comb]
+            self.cint = [self.comp_int(wfs_y[j[0]],wfs_y[j[1]],wfs_y[j[2]],wfs_y[j[3]]) for j in self.comb]
             self.save()
-
     #-----------------------------------
     def getInt(self, vec):
         i = self.comb.index(tuple(sorted(vec)))
         return self.cint[i]
-
     #-----------------------------------
     def specialCombinations(self):
-
         """This function computes the number of possible configurations
         of N basis functions into poducts of four functions."""
 
-        vec = list(xrange(self.N))
         b = []
- #       for a1 in cr(vec, 2):
- #           for a2 in cr(vec, 2):
- #               b.append(a1+a2)
-        for a in cr(vec, 4):
+        for a in cr(np.arange(self.N), 2):
             b.append(a)
-        return b
-
+        c = []
+        for j in cr(np.arange(len(b)), 2):
+            c.append(j)
+        return [(b[j[0]][0], b[j[0]][1], b[j[1]][0], b[j[1]][1]) for j in c]
     #-----------------------------------
-
-    @staticmethod
-    def overlap_int(gf1,gf2):
-        """Overlap integral for two s-gaussian functions"""
-
-        r1=pow((gf1[0]-gf2[0]),2)+pow((gf1[1]-gf2[1]),2)+pow((gf1[2]-gf2[2]),2)
-        return pow((const.pi/(gf1[3]+gf2[3])),(3/2))*np.exp(-(r1*gf1[3]*gf2[3])/(gf1[3]+gf2[3]))
-
-    #----------------------------------
-
     @staticmethod
     def comp_int(wf1,wf2,wf3,wf4):
-
         integral=0
 
         for j1 in xrange(wf1._num_fu):
@@ -114,14 +100,13 @@ class CoulombInt(object):
                         #    integral +=0
         return integral
     #-----------------------------------
-
     def sum2(self, j, i):
         ans = 0
         for k in xrange(self.N):
             ans+=self.getInt([j,i,k,k])
 
         return ans
-
+    #-----------------------------------
     def save(self):     # fixed number of functions, varied amplitudes and widths
         if (self._save != '0'):
             p = self._save + "coint2.dat"

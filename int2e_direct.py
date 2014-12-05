@@ -7,8 +7,30 @@ from itertools import combinations_with_replacement as cr
 import sys
 import os
 from wf import WF
-from skmonaco import mcquad
+from skmonaco import mcquad, mcmiser
 import time
+os.system("taskset -p 0xff %d" % os.getpid())
+
+
+def two_el_int(wf1, wf2, wf3, wf4):
+
+    def integrand(x, p1, p2, p3, p4):
+        x1=np.array([x[0], x[1], x[2]])
+        x2=np.array([x[3], x[4], x[5]])
+        wf1 = p1.get_value(x1)
+        wf2 = p2.get_value(x1)
+        wf3 = p3.get_value(x2)
+        wf4 = p4.get_value(x2)
+        D=np.sqrt(np.sum((x1-x2)**2))
+        return wf1*wf2*(1/D)*wf3*wf4
+
+    xl = [-6.5, 0.0, -6.5, -6.5, 0.0, -6.5]
+    xu = [6.5, 8.9, 6.5, 6.5, 8.9, 6.5]
+
+    v, a = mcquad(integrand, xl=xl, xu=xu, npoints=5000000, args=[wf1, wf2, wf3, wf4], nprocs = 10)
+#    v, a = mcmiser(integrand, xl=xl, xu=xu, npoints=3000000, args=[wf1, wf2, wf3, wf4], nprocs = 10)
+
+    return v, a
 
 class CoulombIntDir(object):
 
@@ -44,8 +66,11 @@ class CoulombIntDir(object):
                 #                p='/data/users/mklymenko/science/H2_100/programing/dis/v2/', flag='int', **kw)) # executing the fitting procedure N-times
 
             # computing integrals for all possible combinations stored in self.comb
+            x = np.linspace(-6.5, 6.5, 300)
+            y = np.linspace(4.0, 8.9, 300)
+            wfs_y[1].plot2d(x,y)
             start_time = time.time()
-            self.cint = [self.two_el_int(wfs_y[j[0]],wfs_y[j[1]],wfs_y[j[2]],wfs_y[j[3]]) for j in self.comb]
+            self.cint = [two_el_int(wfs_y[j[0]],wfs_y[j[1]],wfs_y[j[2]],wfs_y[j[3]]) for j in self.comb]
             # self.cint = self.two_el_int(wfs_y[0],wfs_y[0],wfs_y[0],wfs_y[0])
             # self.cint = [self.overlap_int(wfs_y[j],wfs_y[j]) for j in xrange(self.N)]
             # self.cint = self.overlap_int(wfs_y[0],wfs_y[0])
@@ -107,7 +132,8 @@ class CoulombIntDir(object):
         xl = [-6.5, 0.0, -6.5, -6.5, 0.0, -6.5]
         xu = [6.5, 8.9, 6.5, 6.5, 8.9, 6.5]
 
-        v, a = mcquad(integrand, xl=xl, xu=xu, npoints=1000000, args=[wf1, wf2, wf3, wf4])
+#        v, a = mcquad(integrand, xl=xl, xu=xu, npoints=1000000, args=[wf1, wf2, wf3, wf4], nprocs = 5)
+        v, a = mcmiser(integrand, xl=xl, xu=xu, npoints=100000, args=[wf1, wf2, wf3, wf4])
 
         return v, a
 
